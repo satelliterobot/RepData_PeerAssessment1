@@ -5,13 +5,46 @@ output:
     keep_md: true
 ---
 
+```{r setoptions,echo=FALSE}
+# When numbers are displayed in this document, we prefer not to use scientific
+# notation like 1.5e4 unless the numbers are very large.
+options(scipen=7)
+```
 
 ## Loading and preprocessing the data
 
+The data comes as a zip file containing a single comma-separated values (csv)
+file.
+
+```{r}
+# Unpack the data, if not already done
+dataName <- "activity.csv"
+zipName <- sub(".csv", ".zip", dataName)
+if (!file.exists(dataName)) {
+    unzip(zipName)
+}
+
+dat <- read.csv("activity.csv",
+                colClasses=c("integer", "character", "integer"))
+head(dat)
+```
 
 
 ## What is mean total number of steps taken per day?
 
+Filter out missing values, then group by date, then sum up steps on each date.
+
+```{r message=FALSE}
+library(dplyr)
+stepsByDay <- dat %>% filter(complete.cases(.)) %>% group_by(date) %>%
+    summarize(steps=sum(steps))
+library(ggplot2)
+qplot(stepsByDay$steps, geom="histogram", xlab="Number of steps in a day")
+stepsByDaySummary <- summary(stepsByDay$steps)
+```
+
+The mean number of steps per day is `r round(stepsByDaySummary["Mean"])`.
+The median number of steps per day is `r round(stepsByDaySummary["Median"])`.
 
 
 ## What is the average daily activity pattern?
