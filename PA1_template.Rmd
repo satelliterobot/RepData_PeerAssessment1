@@ -26,7 +26,14 @@ if (!file.exists(dataName)) {
 
 dat <- read.csv("activity.csv",
                 colClasses=c("integer", "character", "integer"))
-head(dat)
+str(dat)
+```
+
+For clarity, we change the date column to the Date data type.
+
+```{r}
+dat$date <- as.Date(dat$date)
+str(dat)
 ```
 
 
@@ -156,7 +163,7 @@ workable way to impute data.
 ## Are there differences in activity patterns between weekdays and weekends?
 
 ```{r}
-newDat$dayOfWeek <- weekdays(as.Date(newDat$date))
+newDat$dayOfWeek <- weekdays(newDat$date)
 newDat$weekdayOrWeekend <- as.factor(ifelse(newDat$dayOfWeek=='Saturday' |
                                             newDat$dayOfWeek=='Sunday',
                                             'weekend', 'weekday'))
