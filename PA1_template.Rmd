@@ -90,6 +90,67 @@ Interval `r intervalWithMaxSteps` contains the maximum number of steps.
 
 ## Imputing missing values
 
+```{r}
+nrowMissingValues <- nrow(dat) - sum(complete.cases(dat))
+```
+
+There are `r nrowMissingValues` rows with missing values.
+
+We will fill in missing values by using the mean number of steps for that
+interval. We will do this in 3 steps:
+
+1. Get the mean number of steps for each interval.
+2. Create a new data set by merging the original table with the mean number of
+   steps table.
+3. Create a new column with no NA's by taking the value of "steps" from the
+   original table, *or* if that is NA, the value from the column we added in
+   step 2.
+
+```{r}
+meanSteps <- dat %>% filter(complete.cases(.)) %>% group_by(interval) %>%
+    summarize(meanSteps=mean(steps))
+newDat <- left_join(dat, meanSteps, by=c("interval"))
+newDat$imputedSteps <- ifelse(is.na(newDat$steps), newDat$meanSteps, newDat$steps)
+```
+
+Now repeat the histogram from the first question above to check how much of a
+difference imputing the data made.
+
+```{r message=FALSE}
+newStepsByDay <- newDat %>% group_by(date) %>% summarize(steps=sum(imputedSteps))
+library(gridExtra)
+plot1 <- qplot(stepsByDay$steps, geom="histogram", fill=I("blue"),
+               main="Original (Ignore NA)",
+               xlab="Number of steps in a day")
+plot2 <- qplot(newStepsByDay$steps, geom="histogram", fill=I("purple"),
+               main="With Imputed Values",
+               xlab="Number of steps in a day")
+grid.arrange(plot1, plot2, ncol=2)
+```
+
+The new plot looks like the old except for some higher bars in the middle. Were
+entire days that were all NA before are being filled in? To check that:
+
+```{r}
+length(unique(stepsByDay$date))
+length(unique(newStepsByDay$date))
+```
+
+The data set with imputed values has 8 days that were not there before (they
+were all NA's).
+
+```{r}
+newStepsByDaySummary <- summary(newStepsByDay$steps)
+newMeanStepsByDay <- round(newStepsByDaySummary["Mean"])
+newMedianStepsByDay <- round(newStepsByDaySummary["Median"])
+```
+
+The new mean number of steps per day is `r newMeanStepsByDay`
+(old was `r meanStepsByDay`).  
+The new median number of steps per day is `r newMedianStepsByDay`.
+(old was `r medianStepsByDay`).  
+This is close to the original so using means by interval seems like a
+workable way to impute data.
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
