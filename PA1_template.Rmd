@@ -36,6 +36,28 @@ dat$date <- as.Date(dat$date)
 str(dat)
 ```
 
+From the range of the "interval" variable it looks like that variable codes
+hours and minutes in 24-hour format.
+
+```{r}
+range(dat$interval)
+# Just the first two digits
+range(floor(dat$interval/100))
+# Just the last two digits
+range(dat$interval %% 100)
+```
+
+This isn't a very good representation. If we put "interval" on the x-axis of a
+plot there would be big gaps between 1255 and 1300, for example, when those two
+intervals actually should be right next to each other. Convert "interval" to a
+time.
+
+```{r}
+# The sprintf function here makes the number from "interval" 4 digits long
+# (e.g. 15 becomes "0015") before trying to interpret it as a time of day.
+dat$interval <- as.POSIXct(sprintf("%04d", dat$interval), tz="GMT", "%H%M")
+```
+
 
 ## What is mean total number of steps taken per day?
 
@@ -58,33 +80,13 @@ The median number of steps per day is `r medianStepsByDay`.
 
 ## What is the average daily activity pattern?
 
-From the range of the "interval" variable it looks like that variable codes
-hours and minutes in 24-hour format.
-
 ```{r}
-range(dat$interval)
-# Just the first two digits
-range(floor(dat$interval/100))
-# Just the last two digits
-range(dat$interval %% 100)
-```
-
-So we don't want to use "interval" as is on the x-axis: there would be big gaps
-between 1255 and 1300, for example, when those two intervals should be right next to
-each other. Convert "interval" to a time.
-
-```{r}
-# The group_by function used below wants times in POSIXct format. The sprintf
-# function here makes the number from "interval" 4 digits long (e.g. 15 becomes
-# "0015") before trying to interpret it as a time of day.
-dat$betterInterval <- as.POSIXct(sprintf("%04d", dat$interval),
-                                 tz="GMT", "%H%M")
-stepsByInterval <- dat %>% filter(complete.cases(.)) %>%
-    group_by(betterInterval) %>% summarize(steps=mean(steps))
+stepsByInterval <- dat %>% filter(complete.cases(.)) %>% group_by(interval) %>%
+    summarize(steps=mean(steps))
 
 # Use the scales library to be able to format the x-axis as just times.
 library(scales)
-ggplot(stepsByInterval, aes(x=betterInterval, y=steps)) +
+ggplot(stepsByInterval, aes(x=interval, y=steps)) +
     geom_line() +
     labs(x="Interval", y="Average number of steps in interval") +
     scale_x_datetime(labels=date_format("%H:%M"))
@@ -92,7 +94,8 @@ ggplot(stepsByInterval, aes(x=betterInterval, y=steps)) +
 intervalWithMaxSteps <- dat[which.max(stepsByInterval$steps),]$interval
 ```
 
-Interval `r intervalWithMaxSteps` contains the maximum number of steps.
+Interval `r strftime(intervalWithMaxSteps, "%H%M", tz="GMT")` contains the
+maximum number of steps.
 
 
 ## Imputing missing values
@@ -171,10 +174,10 @@ head(newDat)
 
 # This plot will be much like the average daily activity pattern plot above,
 # but it needs to include the weekdayOrWeekend variable in the group_by.
-stepsByInterval <- newDat %>% group_by(betterInterval, weekdayOrWeekend) %>%
+stepsByInterval <- newDat %>% group_by(interval, weekdayOrWeekend) %>%
     summarize(imputedSteps=mean(imputedSteps))
 
-ggplot(stepsByInterval, aes(x=betterInterval, y=imputedSteps)) +
+ggplot(stepsByInterval, aes(x=interval, y=imputedSteps)) +
     geom_line() +
     facet_grid(weekdayOrWeekend ~ .) +
     labs(x="Interval", y="Average number of steps") +
