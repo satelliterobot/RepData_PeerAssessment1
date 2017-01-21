@@ -29,11 +29,10 @@ dat <- read.csv("activity.csv",
 str(dat)
 ```
 
-For clarity, we change the date column to the Date data type.
+Change the date column to the Date data type.
 
 ```{r}
 dat$date <- as.Date(dat$date)
-str(dat)
 ```
 
 From the range of the "interval" variable it looks like that variable codes
@@ -56,6 +55,7 @@ time.
 # The sprintf function here makes the number from "interval" 4 digits long
 # (e.g. 15 becomes "0015") before trying to interpret it as a time of day.
 dat$interval <- as.POSIXct(sprintf("%04d", dat$interval), tz="GMT", "%H%M")
+str(dat)
 ```
 
 
@@ -157,7 +157,7 @@ newMedianStepsByDay <- round(newStepsByDaySummary["Median"])
 
 The new mean number of steps per day is `r newMeanStepsByDay`
 (old was `r meanStepsByDay`).  
-The new median number of steps per day is `r newMedianStepsByDay`.
+The new median number of steps per day is `r newMedianStepsByDay`
 (old was `r medianStepsByDay`).  
 This is close to the original so using means by interval seems like a
 workable way to impute data.
