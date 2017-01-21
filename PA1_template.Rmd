@@ -154,3 +154,31 @@ workable way to impute data.
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+newDat$dayOfWeek <- weekdays(as.Date(newDat$date))
+newDat$weekdayOrWeekend <- as.factor(ifelse(newDat$dayOfWeek=='Saturday' |
+                                            newDat$dayOfWeek=='Sunday',
+                                            'weekend', 'weekday'))
+head(newDat)
+
+# This plot will be much like the average daily activity pattern plot above,
+# but it needs to include the weekdayOrWeekend variable in the group_by.
+stepsByInterval <- newDat %>% group_by(betterInterval, weekdayOrWeekend) %>%
+    summarize(imputedSteps=mean(imputedSteps))
+
+ggplot(stepsByInterval, aes(x=betterInterval, y=imputedSteps)) +
+    geom_line() +
+    facet_grid(weekdayOrWeekend ~ .) +
+    labs(x="Interval", y="Average number of steps") +
+    scale_x_datetime(labels=date_format("%H:%M"))
+```
+
+This plot suggests that:
+
+- People get going earlier on weekdays (around 6am compared to around 8am on
+  weekends).
+- Activity is more evenly spread throughout the day on weekends (the spikes are
+  not as extreme).
+- People stay active slightly longer on weekends (with the last spike in
+  activity occuring around 8pm compared to 7pm on weekdays).
